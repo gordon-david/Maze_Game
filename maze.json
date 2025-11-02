@@ -1,0 +1,66 @@
+{
+    "rooms": [
+        {
+            "id": "entrance",
+            "description": "You stand in a torch-lit cave entrance. Ancient runes decorate the walls.",
+            "exits": [
+                {
+                    "label": "Follow the left passage",
+                    "destination": "library"
+                },
+                {
+                    "label": "Take the right tunnel",
+                    "destination": "crypt"
+                }
+            ]
+        },
+        {
+            "id": "library",
+            "description": "Dusty shelves line the walls of this forgotten library. Cobwebs glisten in the dim light.",
+            "exits": [
+                {
+                    "label": "Return to entrance",
+                    "destination": "entrance"
+                },
+                {
+                    "label": "Enter the study",
+                    "destination": "study"
+                }
+            ]
+        },
+        {
+            "id": "crypt",
+            "description": "Ancient stone sarcophagi rest in alcoves. A chill runs down your spine.",
+            "exits": [
+                {
+                    "label": "Back to entrance",
+                    "destination": "entrance"
+                },
+                {
+                    "label": "Descend deeper",
+                    "destination": "treasure"
+                }
+            ]
+        },
+        {
+            "id": "study",
+            "description": "A cozy room with an old desk. Papers are scattered everywhere.",
+            "exits": [
+                {
+                    "label": "Back to library",
+                    "destination": "library"
+                },
+                {
+                    "label": "Secret passage",
+                    "destination": "treasure"
+                }
+            ]
+        },
+        {
+            "id": "treasure",
+            "description": "You've found the legendary treasure room! Golden artifacts glitter in your torchlight.",
+            "exits": [],
+            "is_end": true
+        }
+    ]
+}
