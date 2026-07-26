@@ -13,16 +13,22 @@ fn main() -> eframe::Result<()> {
 /// Actions that can be triggered by UI interactions.
 /// Used to collect user intent during UI rendering before applying
 /// changes to game state, avoiding borrow checker conflicts.
-#[derive(Debug)]
+// #[derive(Debug)]
 enum GameAction {
     /// Start a new game
     Restart,
     /// Choose an exit at the given index
     ChooseExit(usize),
+    ReplaceScreen(Box<dyn Screen>),
+}
+
+trait Screen {
+    fn render(&self, ctx: &egui::Context, state: &GameState) -> Option<GameAction>;
 }
 
 struct MazeApp {
     state: GameState,
+    screen: Box<dyn Screen>,
 }
 
 impl Default for MazeApp {
@@ -49,21 +55,42 @@ impl Default for MazeApp {
             GameState::new()
         };
 
-        Self { state }
+        Self {
+            state,
+            screen: Box::new(TitleScreen {}),
+        }
     }
 }
 
-impl MazeApp {
-    /// Render the game UI and collect any user actions.
-    /// This function only reads state, never modifies it.
-    fn render_ui(&self, ctx: &egui::Context) -> Option<GameAction> {
+impl App for MazeApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // First collect any actions using only immutable access
+        // let action = self.render_ui(ctx);
+        let action = self.screen.render(ctx, &self.state);
+
+        // Then update state if we have an action
+        if let Some(_action) = action {
+            match _action {
+                GameAction::Restart => self.state = GameState::new(),
+                GameAction::ChooseExit(i) => self.state.choose_exit(i),
+                GameAction::ReplaceScreen(screen) => self.screen = screen,
+            }
+        }
+    }
+}
+
+#[derive(Default)]
+struct GameScreen;
+
+impl Screen for GameScreen {
+    fn render(&self, ctx: &egui::Context, state: &GameState) -> Option<GameAction> {
         let mut action = None;
 
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("🧱 Maze Game");
             ui.separator();
 
-            let room = self.state.current_room();
+            let room = state.current_room();
             ui.label(room.description.clone());
             ui.add_space(20.0);
 
@@ -79,29 +106,38 @@ impl MazeApp {
                     }
                 }
             }
+            if ui.button("Restart").clicked() {
+                action = Some(GameAction::Restart);
+            }
+            if ui.button("Back to Title Screen").clicked() {
+                action = Some(GameAction::ReplaceScreen(Box::new(TitleScreen {})))
+            }
         });
 
         action
     }
-
-    /// Update game state based on user actions.
-    /// Only called when there are actions to process.
-    fn update_state(&mut self, action: GameAction) {
-        match action {
-            GameAction::Restart => self.state = GameState::new(),
-            GameAction::ChooseExit(i) => self.state.choose_exit(i),
-        }
-    }
 }
 
-impl App for MazeApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // First collect any actions using only immutable access
-        let action = self.render_ui(ctx);
+#[derive(Default)]
+struct TitleScreen;
 
-        // Then update state if we have an action
-        if let Some(_action) = action {
-            self.update_state(_action);
-        }
+impl Screen for TitleScreen {
+    fn render(&self, ctx: &egui::Context, state: &GameState) -> Option<GameAction> {
+        let mut action = None;
+
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.heading("TITLE MENU");
+            ui.separator();
+            ui.add_space(20.0);
+
+            if ui.button("Title").clicked() {
+                action = Some(GameAction::ReplaceScreen(Box::new(TitleScreen {})))
+            }
+            if ui.button("Start").clicked() {
+                action = Some(GameAction::ReplaceScreen(Box::new(GameScreen {})))
+            }
+        });
+
+        action
     }
 }
